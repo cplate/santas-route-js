@@ -1,0 +1,125 @@
+﻿<!DOCTYPE html>
+<html data-ng-app="optApp">
+<head>
+    <title>Planning Santa's Route</title>
+    <link rel="stylesheet" href="Site.css" />
+</head>
+<body>    
+    <div id="page" data-ng-controller="optController">
+        <h1>Help Santa!</h1>
+        <div id="instructions">Santa needs some help in planning his route to visit all of the good little girls and boys on Christmas Eve.  You can help him out by planning out either the US capital cities or major world cities, so all he has to do is fill in the gaps once he completes his list.</div>
+        <div>
+            <div class="settings">
+                <h2>Settings</h2>
+                <div id="locations">
+                    <div class="locationOption">
+                        <input type="radio" name="locationGroup" ng-model="selectedLocations" ng-value="locationData.usLocations" />US Cities</div>
+                    <div class="locationOption">
+                        <input type="radio" name="locationGroup" ng-model="selectedLocations" ng-value="locationData.worldLocations" />World Cities</div>
+                </div>
+                <div class="setting">
+                    <label class="caption">Use Setting Group: </label>
+                    <input type="text" ng-model="settingsGroupName" class="medium" />
+                    <button ng-click="loadSettings()" data-ng-enabled="!isRouting" class="small">Load</button>
+                </div>
+                <div class="setting">
+                    <label class="caption">Max Iterations [1-10000]: </label>
+                    <input type="number" ng-model="algSettings.maxIterations" class="small" />
+                </div>
+                <div class="setting">
+                    <label class="caption">Population Size [1-5000]: </label>
+                    <input type="number" ng-model="algSettings.populationSize" class="small" />
+                </div>
+                <div class="setting">
+                    <label class="caption">Survival Percentage [1-99]: </label>
+                    <input type="number" ng-model="algSettings.survivalPercentage" class="small" />
+                </div>
+                <div class="setting">
+                    <label class="caption">Mutation Percentage [0-100]: </label>
+                    <input type="number" ng-model="algSettings.mutationPercentage" class="small" />
+                </div>
+                <div class="setting">
+                    <label class="caption">New Blood Percentage [0-50]: </label>
+                    <input type="number" ng-model="algSettings.newBloodPercentage" class="small" />
+                </div> 
+                <div class="message">{{algMessage}}</div>               
+                <br/>
+                <button ng-click="startRouting()" data-ng-disabled="isRouting">Start Routing</button>
+            </div>
+            <div ng-show="currentRun.bestIteration" class="currentRun">
+                <h2>Current Run</h2>
+                <div class="metric">
+                    <label class="caption">Progress: </label>
+                    <label>Completed {{currentRun.iteration}} of {{currentRun.totalIterations}} iterations</label>
+                </div>
+                <div class="metric">
+                    <label class="caption">Distance: </label>
+                    <label>{{currentRun.solution.score|number:0}} miles</label>
+                </div>
+                <div class="metric">
+                    <label class="caption">Best route found at iteration: </label>
+                    <label>{{currentRun.bestIteration}}</label>
+                </div>
+                <br/>
+                <button ng-click="stopRouting()" data-ng-show="isRouting">Route Looks Good Enough</button>
+            </div>
+            <div ng-show="bestRoute.solution.score" class="bestRoute">
+                <h2>Best Route</h2>
+                <div class="metric">
+                    <label class="caption">Distance: </label>
+                    <label>{{bestRoute.solution.score|number:0}} miles</label>
+                </div>
+                <div class="metric">
+                    <label class="caption">Max Iterations Used: </label>
+                    <label>{{bestRoute.settings.maxIterations}}</label>
+                </div>
+                <div class="metric">
+                    <label class="caption">Population Size Used: </label>
+                    <label>{{bestRoute.settings.populationSize}}</label>
+                </div>
+                <div class="metric">
+                    <label class="caption">Survival Percentage Used: </label>
+                    <label>{{bestRoute.settings.survivalPercentage}}</label>
+                </div>
+                <div class="metric">
+                    <label class="caption">Mutation Percentage Used: </label>
+                    <label>{{bestRoute.settings.mutationPercentage}}</label>
+                </div>
+                <div class="metric">
+                    <label class="caption">New Blood Percentage Used: </label>
+                    <label>{{bestRoute.settings.newBloodPercentage}}</label>
+                </div>
+                <br/>
+                <button ng-click="loadBestRoute()" data-ng-disabled="isRouting">Load This Route And Settings</button>
+            </div>
+        </div>
+        <div style="clear: both"></div>
+        <div id="routeInfo">
+            <div>
+                <h2>Route Map</h2>
+                <div id="mapContainer" style="width:810px;height:480px" map mapapi="mapper" min-width="300" max-width="810"></div>
+            </div>            
+            <div ng-show="currentRun.iteration">
+                <h2>Route Sequence</h2>
+                <ol id="routeList">
+                    <li data-ng-repeat="stopIdx in currentRun.solution.sequence" 
+                        ng-class="{ col1: $index < 17, col2: $index >= 17 && $index < 34, col3: $index >= 34, reset: $index == 17 || $index == 34 }">{{selectedLocations[stopIdx].name}}</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    <script src="https://open.mapquestapi.com/sdk/js/v7.0.s/mqa.toolkit.js?key=<<YOUR KEY GOES HERE>>"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
+    <script src="https://cdn.firebase.com/js/client/2.0.4/firebase.js"></script>
+    <script src="https://cdn.firebase.com/libs/angularfire/0.9.0/angularfire.min.js"></script>
+    <script type="text/javascript" src="app/app.js"></script>
+    <script type="text/javascript" src="app/controllers/optController.js"></script>
+    <script type="text/javascript" src="app/directives/map.js"></script>
+    <script type="text/javascript" src="app/services/data/algorithmSettingsData.js"></script>
+    <script type="text/javascript" src="app/services/data/bestRoutesData.js"></script>
+    <script type="text/javascript" src="app/services/data/locationData.js"></script>    
+    <script type="text/javascript" src="app/services/distance/distanceCalculator.js"></script>
+    <script type="text/javascript" src="app/services/map/mapApi.js"></script>
+    <script type="text/javascript" src="app/services/routing/router.js"></script>      
+</body>
+</html>
